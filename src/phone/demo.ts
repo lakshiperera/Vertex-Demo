@@ -29,8 +29,15 @@ const SLOT: Record<string, [number, number]> = {
   audio: [4, 4],
   sd: [12, 1.6],
   lock: [7, 3.5],
-  led: [6, 1.6],
+  led: [3, 3],
   power: [14, 9],
+  rj45: [14, 11],
+  vga: [17, 7],
+  'power-in': [10, 6],
+  smartcard: [56, 2],
+  sim: [12, 1.6],
+  switch: [8, 3],
+  fingerprint: [12, 12],
 };
 
 /**
@@ -42,7 +49,8 @@ export class DemoSource implements FrameSource {
   readonly kind = 'demo' as const;
   readonly width = 960;
   readonly height = 720;
-  readonly fovDeg = 60;
+  /** The simulated camera's true FOV. The app is not told this; it must calibrate it. */
+  readonly trueFovDeg = 60;
   readonly lidDeg = 110;
   readonly payload: MarkerPayload;
 
@@ -59,7 +67,7 @@ export class DemoSource implements FrameSource {
     element.width = this.width;
     element.height = this.height;
     this.ctx = element.getContext('2d', { willReadFrequently: true })!;
-    this.K = intrinsicsFromFov(this.width, this.height, this.fovDeg);
+    this.K = intrinsicsFromFov(this.width, this.height, this.trueFovDeg);
     const layout = computeMarkerLayout(model.display.widthMm, model.display.heightMm);
     this.payload = { v: 1, m: model.id, s: layout.markerSizeMm, k: layout.centers };
   }
@@ -103,8 +111,9 @@ export class DemoSource implements FrameSource {
     // Camera orbits in front of the laptop so you see the left side, front and right side.
     const yaw = 0.8 * Math.sin(t * 0.35);
     const el = 0.4 + 0.08 * Math.sin(t * 0.23);
-    const r = 600 + 50 * Math.sin(t * 0.17);
-    const target: Vec3 = [0, 50, 80];
+    const sizeScale = bw / 314; // bigger laptops: camera further away
+    const r = (600 + 50 * Math.sin(t * 0.17)) * sizeScale;
+    const target: Vec3 = [0, 50, 80 * sizeScale];
     const C = add(target, [r * Math.sin(yaw) * Math.cos(el), r * Math.sin(el), r * Math.cos(yaw) * Math.cos(el)]);
     const fwd = normalize(sub(target, C));
     const right = normalize(cross(fwd, [0, 1, 0]));
@@ -142,13 +151,17 @@ export class DemoSource implements FrameSource {
     };
     const facing = (n: Vec3, center: Vec3) => dot(n, sub(C, center)) > 0;
 
+    // Base box spans z = zb (back edge) … zf (front edge); the hinge is at z = 0.
+    const zb = -(model.base.hingeFromBackMm ?? 0);
+    const zf = zb + bd;
+
     // Shadow under the laptop
     poly(
       [
-        [-bw / 2 - 6, -bt, -4],
-        [bw / 2 + 6, -bt, -4],
-        [bw / 2 + 10, -bt, bd + 8],
-        [-bw / 2 - 10, -bt, bd + 8],
+        [-bw / 2 - 6, -bt, zb - 4],
+        [bw / 2 + 6, -bt, zb - 4],
+        [bw / 2 + 10, -bt, zf + 8],
+        [-bw / 2 - 10, -bt, zf + 8],
       ],
       'rgba(0,0,0,0.35)',
     );
@@ -157,18 +170,30 @@ export class DemoSource implements FrameSource {
     const x0 = -bw / 2;
     const x1 = bw / 2;
     const faces: { n: Vec3; pts: Vec3[]; fill: string }[] = [
-      { n: [0, 0, 1], pts: [[x0, 0, bd], [x1, 0, bd], [x1, -bt, bd], [x0, -bt, bd]], fill: '#7c818a' },
-      { n: [-1, 0, 0], pts: [[x0, 0, 0], [x0, 0, bd], [x0, -bt, bd], [x0, -bt, 0]], fill: '#6b7079' },
-      { n: [1, 0, 0], pts: [[x1, 0, 0], [x1, 0, bd], [x1, -bt, bd], [x1, -bt, 0]], fill: '#6b7079' },
-      { n: [0, 1, 0], pts: [[x0, 0, 0], [x1, 0, 0], [x1, 0, bd], [x0, 0, bd]], fill: '#a3a8b0' },
+      { n: [0, 0, 1], pts: [[x0, 0, zf], [x1, 0, zf], [x1, -bt, zf], [x0, -bt, zf]], fill: '#7c818a' },
+      { n: [0, 0, -1], pts: [[x1, 0, zb], [x0, 0, zb], [x0, -bt, zb], [x1, -bt, zb]], fill: '#6b7079' },
+      { n: [-1, 0, 0], pts: [[x0, 0, zb], [x0, 0, zf], [x0, -bt, zf], [x0, -bt, zb]], fill: '#6b7079' },
+      { n: [1, 0, 0], pts: [[x1, 0, zb], [x1, 0, zf], [x1, -bt, zf], [x1, -bt, zb]], fill: '#6b7079' },
+      { n: [0, 1, 0], pts: [[x0, 0, zb], [x1, 0, zb], [x1, 0, zf], [x0, 0, zf]], fill: '#a3a8b0' },
     ];
     for (const f of faces) {
       const center = scale(f.pts.reduce((a, b) => add(a, b)), 0.25);
       if (facing(f.n, center)) poly(f.pts, f.fill, 'rgba(0,0,0,0.25)');
     }
-    // Keyboard and touchpad
-    poly([[-132, 0, 22], [132, 0, 22], [132, 0, 122], [-132, 0, 122]], '#2b2f36');
-    poly([[-58, 0, 138], [58, 0, 138], [58, 0, 205], [-58, 0, 205]], '#959aa3', 'rgba(0,0,0,0.2)');
+    // Keyboard, and the touchpad where the model says it is
+    const kw = Math.min(bw - 40, 300) / 2;
+    poly([[-kw, 0, 22], [kw, 0, 22], [kw, 0, 122], [-kw, 0, 122]], '#2b2f36');
+    const tp = model.ports.find((p) => p.type === 'touchpad')?.positionMm ?? { x: 0, y: 0, z: zf - 50 };
+    poly(
+      [
+        [tp.x - 58, 0, tp.z - 36],
+        [tp.x + 58, 0, tp.z - 36],
+        [tp.x + 58, 0, tp.z + 36],
+        [tp.x - 58, 0, tp.z + 36],
+      ],
+      '#959aa3',
+      'rgba(0,0,0,0.2)',
+    );
 
     // Port slots
     for (const p of model.ports) this.drawSlot(p, poly, facing);
@@ -234,7 +259,7 @@ export class DemoSource implements FrameSource {
     const [w, h] = size;
     const { x, y, z } = p.positionMm;
     const c: Vec3 = [x, y, z];
-    const fill = p.type === 'led' ? '#f5f5f4' : p.type === 'power' ? '#3a3f47' : '#111316';
+    const fill = p.type === 'led' ? '#f5f5f4' : p.type === 'power' || p.type === 'fingerprint' ? '#3a3f47' : '#111316';
     let pts: Vec3[];
     let nrm: Vec3;
     switch (p.side) {

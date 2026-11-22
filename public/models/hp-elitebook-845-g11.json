@@ -1,0 +1,142 @@
+{
+  "id": "hp-elitebook-845-g11",
+  "displayName": "HP EliteBook 845 G11 (14\")",
+  "source": "HP QuickSpecs c08893141 v16 (Feb 2025): component list, side photos, 315.6 × 224.5 × 16.35 mm. Positions measured from the QuickSpecs side photos (about ±5 mm); verify with a ruler on your unit.",
+  "display": { "widthMm": 301.6, "heightMm": 188.5, "hingeToDisplayBottomMm": 15 },
+  "base": { "widthMm": 315.6, "depthMm": 224.5, "thicknessMm": 16.4, "hingeFromBackMm": 0 },
+  "defaultLidAngleDeg": 110,
+  "ports": [
+    {
+      "id": "hdmi",
+      "label": "HDMI 2.1",
+      "type": "hdmi",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -7, "z": 16 },
+      "info": "Connect an external monitor, TV or meeting-room projector.",
+      "specs": ["HDMI 2.1", "HDMI cable sold separately"],
+      "tips": ["Press Win + P to choose Duplicate or Extend."]
+    },
+    {
+      "id": "usb-a-charging",
+      "label": "USB-A 5Gbps (charging)",
+      "type": "usb-a",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -7, "z": 38 },
+      "info": "USB-A port that can charge a phone or other device.",
+      "specs": ["SuperSpeed USB Type-A 5 Gbps", "Power charging"]
+    },
+    {
+      "id": "tb4-1",
+      "label": "Thunderbolt 4 / USB-C",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -7, "z": 56 },
+      "info": "Charging, displays, docks and fast data through one cable. Use either USB-C port for the charger.",
+      "specs": ["Thunderbolt 4 · USB4 40 Gbps", "USB Power Delivery (charging)", "DisplayPort 2.1"],
+      "tips": ["Plug the HP USB-C charger or a USB-C/Thunderbolt dock in here."]
+    },
+    {
+      "id": "tb4-2",
+      "label": "Thunderbolt 4 / USB-C",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -7, "z": 72 },
+      "info": "Second Thunderbolt 4 port, same features as the first.",
+      "specs": ["Thunderbolt 4 · USB4 40 Gbps", "USB Power Delivery (charging)", "DisplayPort 2.1"]
+    },
+    {
+      "id": "power-led",
+      "label": "Power light",
+      "type": "led",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -6, "z": 82 },
+      "info": "Power indicator LED next to the USB-C ports (HP QuickSpecs item 5).",
+      "tips": ["Steady usually means on, blinking means asleep, off means off or hibernating. Check the HP user guide for your unit."]
+    },
+    {
+      "id": "smartcard",
+      "label": "Smart card reader",
+      "type": "smartcard",
+      "side": "left",
+      "positionMm": { "x": -157.8, "y": -6, "z": 169 },
+      "info": "Insert a smart card (employee ID or security card) to sign in.",
+      "specs": ["Integrated smart card reader (optional)"],
+      "optional": true
+    },
+    {
+      "id": "audio",
+      "label": "Headphone/mic jack",
+      "type": "audio",
+      "side": "right",
+      "positionMm": { "x": 157.8, "y": -7, "z": 11 },
+      "info": "Headphones, headsets with a microphone, or speakers.",
+      "specs": ["Headphone/mic combo jack"]
+    },
+    {
+      "id": "usb-a",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "right",
+      "positionMm": { "x": 157.8, "y": -7, "z": 30 },
+      "info": "For mice, keyboards, USB drives and other accessories.",
+      "specs": ["SuperSpeed USB Type-A 5 Gbps"]
+    },
+    {
+      "id": "lock",
+      "label": "Security lock slot",
+      "type": "lock",
+      "side": "right",
+      "positionMm": { "x": 157.8, "y": -7, "z": 47 },
+      "info": "Attach a cable lock to secure the laptop to a desk.",
+      "specs": ["Integrated security lock slot"]
+    },
+    {
+      "id": "nano-sim",
+      "label": "Nano SIM slot",
+      "type": "sim",
+      "side": "right",
+      "positionMm": { "x": 157.8, "y": -6, "z": 64 },
+      "info": "For a nano SIM card on models with 4G/5G mobile broadband.",
+      "specs": ["Nano SIM card slot (only on WWAN models)"],
+      "optional": true
+    },
+    {
+      "id": "power",
+      "label": "Power button",
+      "type": "power",
+      "side": "top",
+      "positionMm": { "x": 132, "y": 0, "z": 22 },
+      "info": "Top-right corner of the keyboard. Press to turn on or sleep. It has a built-in light.",
+      "specs": ["Power button with LED"],
+      "tips": ["Hold for about 10 seconds to force a shutdown if the laptop freezes."]
+    },
+    {
+      "id": "fingerprint",
+      "label": "Fingerprint sensor",
+      "type": "fingerprint",
+      "side": "top",
+      "positionMm": { "x": 108, "y": 0, "z": 128 },
+      "info": "Touch to sign in with Windows Hello. Separate from the power button, below the keyboard.",
+      "specs": ["HP fingerprint sensor (optional, chosen at purchase)"],
+      "optional": true
+    },
+    {
+      "id": "touchpad",
+      "label": "Touchpad",
+      "type": "touchpad",
+      "side": "top",
+      "positionMm": { "x": 0, "y": 0, "z": 176 },
+      "info": "Multi-touch touchpad. Supports Windows Precision gestures (two-finger scroll, three-finger swipe)."
+    },
+    {
+      "id": "webcam",
+      "label": "5MP + IR camera, shutter",
+      "type": "camera",
+      "side": "lid",
+      "positionMm": { "x": 0, "y": 213, "z": 0 },
+      "info": "Webcam with an infrared camera for face sign-in, a webcam light, and a sliding privacy shutter.",
+      "specs": ["5 MP camera (+ IR on some models)", "Camera shutter", "Webcam LED", "2 internal microphones"],
+      "tips": ["Slide the shutter across to cover the camera."]
+    }
+  ]
+}

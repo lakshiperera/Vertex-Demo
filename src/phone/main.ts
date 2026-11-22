@@ -1,10 +1,11 @@
-import { fetchModel } from '../shared/models';
+import { fetchModel, fetchModelIndex } from '../shared/models';
 import { decodePayloadText, type MarkerPayload } from '../shared/payload';
 import type { LaptopModel, Port } from '../shared/types';
 import { DemoSource } from './demo';
+import { FocalEstimator, fovFromFocal } from './focal';
 import { GravitySensor } from './gravity';
 import { computeLaptopFrame, type LaptopFrame } from './laptopPose';
-import { intrinsicsFromFov, type Intrinsics, type Vec2 } from './math';
+import { intrinsicsFromFov, type Intrinsics, type Mat3, type Vec2 } from './math';
 import { coverMap, PORT_ICONS, PortsOverlay } from './overlay';
 import { QrScanner } from './qr';
 import { CameraSource, type FrameSource } from './sources';
@@ -15,12 +16,13 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 // ---------- Settings (remembered per browser) ----------
 interface Settings {
   fov: number;
+  autoFov: boolean;
   lidDeg: number;
   useGravity: boolean;
   showOutline: boolean;
   debug: boolean;
 }
-const DEFAULTS: Settings = { fov: 64, lidDeg: 110, useGravity: true, showOutline: true, debug: false };
+const DEFAULTS: Settings = { fov: 64, autoFov: true, lidDeg: 110, useGravity: true, showOutline: true, debug: false };
 function loadSettings(): Settings {
   try {
     return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('arSettings') ?? '{}') };
@@ -57,6 +59,81 @@ let demoStart = 0;
 const tracker = new MarkerTracker();
 const qr = new QrScanner();
 const gravity = new GravitySensor();
+const focal = new FocalEstimator();
+let focalSize = '';
+let lastFovSave = 0;
+
+/** Intrinsics for this frame: learned focal length when auto-FOV is on and ready, else the FOV setting. */
+function intrinsicsFor(H: Mat3 | null, markerCount: number, w: number, h: number): Intrinsics {
+  const size = `${w}x${h}`;
+  if (size !== focalSize) {
+    focal.reset(); // the estimate is specific to one camera resolution
+    focalSize = size;
+  }
+  if (H) focal.add(H, w, h, markerCount);
+  const f = settings.autoFov ? focal.focal() : null;
+  if (f) {
+    const now = performance.now();
+    if (now - lastFovSave > 2000) {
+      // Remember it, so the next session starts close to the right value.
+      lastFovSave = now;
+      settings.fov = Math.round(fovFromFocal(f, w, h));
+      saveSettings();
+      updateFovLabel();
+    }
+    return { f, cx: w / 2, cy: h / 2 };
+  }
+  return intrinsicsFromFov(w, h, settings.fov);
+}
+
+// ---------- Optional parts (fingerprint reader, smart card…) per laptop model ----------
+function optionalKey(modelId: string) {
+  return `optional:${modelId}`;
+}
+function loadOptional(modelId: string): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(optionalKey(modelId)) ?? '[]');
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+function saveOptional(modelId: string, ids: string[]) {
+  try {
+    localStorage.setItem(optionalKey(modelId), JSON.stringify(ids));
+  } catch {
+    /* storage blocked */
+  }
+}
+function renderOptionalSettings(m: LaptopModel | null) {
+  const box = $('optionalParts');
+  const list = $('optionalList');
+  const optional = m?.ports.filter((p) => p.optional) ?? [];
+  box.classList.toggle('hidden', optional.length === 0);
+  if (!m || optional.length === 0) {
+    list.replaceChildren();
+    return;
+  }
+  const enabled = new Set(loadOptional(m.id));
+  overlay.setEnabledOptional(enabled);
+  list.replaceChildren(
+    ...optional.map((p) => {
+      const label = document.createElement('label');
+      label.className = 'check';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = enabled.has(p.id);
+      input.addEventListener('change', () => {
+        if (input.checked) enabled.add(p.id);
+        else enabled.delete(p.id);
+        saveOptional(m.id, [...enabled]);
+        overlay.setEnabledOptional(enabled);
+      });
+      label.append(input, document.createTextNode(` ${p.label}`));
+      return label;
+    }),
+  );
+}
 
 const video = $<HTMLVideoElement>('video');
 const demoCanvas = $<HTMLCanvasElement>('demo');
@@ -112,6 +189,7 @@ async function ensureModel() {
   try {
     model = await fetchModel(payload.m);
     overlay.setModel(model);
+    renderOptionalSettings(model);
     if (!localStorageHasLid()) settings.lidDeg = model.defaultLidAngleDeg;
   } catch (e) {
     setStatus(e instanceof Error ? e.message : String(e), 'warn');
@@ -160,9 +238,11 @@ function tick(now: number) {
     if (!payload && source instanceof DemoSource && now - demoStart > 4000) setPayload(source.payload);
 
     if (payload && model) {
-      const K = intrinsicsFromFov(source.width, source.height, source.fovDeg ?? settings.fov);
+      const w = source.width;
+      const h = source.height;
+      let K: Intrinsics = intrinsicsFromFov(w, h, settings.fov);
       const markers = tracker.detect(grabbed.image);
-      const res = tracker.estimate(markers, payload, grabbed.toSource, K);
+      const res = tracker.estimate(markers, payload, grabbed.toSource, (H, n) => (K = intrinsicsFor(H, n, w, h)));
       debugCorners = settings.debug ? res?.corners ?? markers.map((m) => m.corners.map((c) => [c.x * grabbed.toSource, c.y * grabbed.toSource] as Vec2)) : null;
       if (res) {
         const up = settings.useGravity ? (source.gravityUp?.() ?? gravity.getUp()) : null;
@@ -221,7 +301,11 @@ async function start() {
   err.classList.add('hidden');
   try {
     if (isDemo) {
-      const m = await fetchModel('sample-14');
+      // Demo laptop: ?model=<id>, else the first model in the list.
+      const wanted = params.get('model');
+      const index = await fetchModelIndex();
+      const id = index.find((e) => e.id === wanted)?.id ?? index[0].id;
+      const m = await fetchModel(id);
       const demo = await DemoSource.create(demoCanvas, m);
       video.classList.add('hidden');
       demoCanvas.classList.remove('hidden');
@@ -265,25 +349,45 @@ function toggleFreeze() {
 }
 
 // ---------- Settings sheet ----------
+function updateFovLabel() {
+  const el = document.getElementById('fovValue');
+  if (!el) return;
+  const f = focal.focal();
+  const w = source?.width ?? 0;
+  const h = source?.height ?? 0;
+  if (settings.autoFov) {
+    el.textContent = f && w ? `auto · ${fovFromFocal(f, w, h).toFixed(1)}°` : `auto · learning (using ${settings.fov}°)`;
+  } else {
+    el.textContent = `${settings.fov}°`;
+  }
+}
+
 function bindSettings() {
   const fov = $<HTMLInputElement>('fov');
+  const autoFov = $<HTMLInputElement>('autoFov');
   const lid = $<HTMLInputElement>('lid');
   const useGravity = $<HTMLInputElement>('useGravity');
   const showOutline = $<HTMLInputElement>('showOutline');
   const debug = $<HTMLInputElement>('debug');
   const sync = () => {
     fov.value = String(settings.fov);
+    autoFov.checked = settings.autoFov;
     lid.value = String(settings.lidDeg);
     useGravity.checked = settings.useGravity;
     showOutline.checked = settings.showOutline;
     debug.checked = settings.debug;
-    $('fovValue').textContent = isDemo ? 'fixed in demo' : `${settings.fov}°`;
     $('lidValue').textContent = `${settings.lidDeg}°`;
-    fov.disabled = isDemo;
+    fov.disabled = settings.autoFov;
+    updateFovLabel();
   };
   sync();
   fov.addEventListener('input', () => {
     settings.fov = Number(fov.value);
+    saveSettings();
+    sync();
+  });
+  autoFov.addEventListener('change', () => {
+    settings.autoFov = autoFov.checked;
     saveSettings();
     sync();
   });
@@ -309,7 +413,8 @@ function bindSettings() {
     model = null;
     lastFrame = null;
     overlay.setModel(null);
-    history.replaceState(null, '', location.pathname + (isDemo ? '?demo=1' : ''));
+    renderOptionalSettings(null);
+    history.replaceState(null, '', location.pathname + (isDemo ? location.search.replace(/[?&]d=[^&]*/, '') : ''));
     if (source instanceof DemoSource) demoStart = performance.now();
     closeSheets();
   });
@@ -321,6 +426,7 @@ $('freezeBtn').addEventListener('click', toggleFreeze);
 $('settingsBtn').addEventListener('click', () => {
   infoSheet.classList.remove('open');
   selected = null;
+  updateFovLabel();
   settingsSheet.classList.toggle('open');
 });
 $('infoClose').addEventListener('click', closeSheets);

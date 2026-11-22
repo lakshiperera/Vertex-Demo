@@ -1,10 +1,12 @@
 import { AR, type ArucoMarker } from '../vendor/js-aruco2/aruco.js';
 import { DICTIONARY_NAME } from '../shared/markers';
 import type { MarkerPayload } from '../shared/payload';
-import { applyH, findHomography, poseFromHomography, type Intrinsics, type Pose, type Vec2 } from './math';
+import { applyH, findHomography, poseFromHomography, type Intrinsics, type Mat3, type Pose, type Vec2 } from './math';
 
 export interface TrackResult {
   pose: Pose;
+  /** Plane (mm) → source image (px) homography, used for focal-length calibration. */
+  H: Mat3;
   markerIds: number[];
   /** Detected marker corners in source-image pixels (for the debug view). */
   corners: Vec2[][];
@@ -22,7 +24,12 @@ export class MarkerTracker {
    * Estimate the pose of the laptop display plane from detected markers.
    * @param toSource factor that converts processing-image pixels to source-image pixels
    */
-  estimate(markers: ArucoMarker[], payload: MarkerPayload, toSource: number, K: Intrinsics): TrackResult | null {
+  estimate(
+    markers: ArucoMarker[],
+    payload: MarkerPayload,
+    toSource: number,
+    getK: (H: Mat3, markerCount: number) => Intrinsics,
+  ): TrackResult | null {
     // Keep the best detection per id (0..3 only).
     const best = new Map<number, ArucoMarker>();
     for (const m of markers) {
@@ -64,8 +71,9 @@ export class MarkerTracker {
     err /= src.length;
     if (err > 6 * toSource) return null; // inconsistent detections (wrong marker, bad corners)
 
-    const pose = poseFromHomography(H, K);
+    // The caller may refine its focal-length estimate from H before choosing intrinsics.
+    const pose = poseFromHomography(H, getK(H, best.size));
     if (!pose || pose.t[2] < 80 || pose.t[2] > 4000) return null;
-    return { pose, markerIds: [...best.keys()], corners, reprojErrorPx: err };
+    return { pose, H, markerIds: [...best.keys()], corners, reprojErrorPx: err };
   }
 }

@@ -17,6 +17,11 @@ export interface Port {
   info: string;
   specs?: string[];
   tips?: string[];
+  /**
+   * Only fitted on some configurations (e.g. fingerprint reader, smart card reader).
+   * Hidden until the user ticks it in Settings, so the app never claims a part the laptop doesn't have.
+   */
+  optional?: boolean;
 }
 
 export interface LaptopModel {
@@ -29,9 +34,21 @@ export interface LaptopModel {
     /** Distance from the hinge axis up to the bottom edge of the lit display area. */
     hingeToDisplayBottomMm: number;
   };
-  base: { widthMm: number; depthMm: number; thicknessMm: number };
+  base: {
+    widthMm: number;
+    /** Total depth, back edge to front edge. */
+    depthMm: number;
+    thicknessMm: number;
+    /**
+     * How far the back edge sits behind the hinge axis (e.g. gaming laptops with a rear port block).
+     * 0 or omitted = hinge at the back edge. Back-edge ports then have z = -hingeFromBackMm.
+     */
+    hingeFromBackMm?: number;
+  };
   /** Lid angle used when the phone has no motion sensor (degrees between base and lid). */
   defaultLidAngleDeg: number;
+  /** Where the layout came from and how exact the positions are. */
+  source?: string;
   ports: Port[];
 }
 

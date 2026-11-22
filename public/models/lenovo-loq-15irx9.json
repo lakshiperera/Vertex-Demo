@@ -1,0 +1,129 @@
+{
+  "id": "lenovo-loq-15irx9",
+  "displayName": "Lenovo LOQ 15 (15IRX9, 15.6\")",
+  "source": "Lenovo PSREF LOQ 15IRX9 (ports 1–8, 359.86 × 258.7 × 21.9–23.9 mm, 'No fingerprint reader', E-shutter) and PSREF product photos. Rear positions measured from the rear photo (about ±5 mm). Left/right side positions and the E-shutter position are estimates; verify on your unit. Other LOQ 15 generations (15IRH8, 15IAX9, 15ARP9…) have similar but not identical layouts.",
+  "display": { "widthMm": 344.2, "heightMm": 193.6, "hingeToDisplayBottomMm": 26 },
+  "base": { "widthMm": 359.9, "depthMm": 258.7, "thicknessMm": 23.9, "hingeFromBackMm": 29 },
+  "defaultLidAngleDeg": 110,
+  "ports": [
+    {
+      "id": "usb-a-rear-1",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "back",
+      "positionMm": { "x": 44, "y": -11, "z": -29 },
+      "info": "Rear USB-A port, good for a mouse or keyboard receiver.",
+      "specs": ["USB-A · USB 5Gbps"]
+    },
+    {
+      "id": "hdmi",
+      "label": "HDMI 2.1",
+      "type": "hdmi",
+      "side": "back",
+      "positionMm": { "x": 20, "y": -11, "z": -29 },
+      "info": "Connect an external monitor or TV, up to high refresh rates for gaming.",
+      "specs": ["HDMI 2.1"],
+      "tips": ["Press Win + P to choose Duplicate or Extend."]
+    },
+    {
+      "id": "rj45",
+      "label": "Ethernet (RJ-45)",
+      "type": "rj45",
+      "side": "back",
+      "positionMm": { "x": -5, "y": -11, "z": -29 },
+      "info": "Wired network cable. Lower latency than Wi-Fi for online gaming.",
+      "specs": ["Gigabit Ethernet"]
+    },
+    {
+      "id": "usb-a-rear-2",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "back",
+      "positionMm": { "x": -30, "y": -11, "z": -29 },
+      "info": "Rear USB-A port.",
+      "specs": ["USB-A · USB 5Gbps"]
+    },
+    {
+      "id": "charge-led",
+      "label": "Charging light",
+      "type": "led",
+      "side": "back",
+      "positionMm": { "x": -43, "y": -9, "z": -29 },
+      "info": "Status light next to the power connector. Shows whether the adapter is connected and the battery is charging.",
+      "tips": ["The exact colours and blink patterns are listed in the Lenovo user guide for your model."]
+    },
+    {
+      "id": "power-in",
+      "label": "Power connector",
+      "type": "power-in",
+      "side": "back",
+      "positionMm": { "x": -56, "y": -11, "z": -29 },
+      "info": "Slim-tip (rectangular) power connector for the Lenovo gaming adapter.",
+      "specs": ["Slim tip (rectangle) power connector", "Rapid Charge Pro: up to 50% in 30 min"],
+      "tips": ["Use the supplied adapter for full gaming performance; USB-C charging is slower."]
+    },
+    {
+      "id": "usb-c",
+      "label": "USB-C 10Gbps (PD, DP)",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": { "x": -179.9, "y": -10, "z": -19 },
+      "info": "USB-C for data, a display, or charging the laptop.",
+      "specs": ["USB 10Gbps", "USB PD 65–100 W (140 W with Lenovo adapter)", "DisplayPort 1.4"]
+    },
+    {
+      "id": "audio",
+      "label": "Combo audio jack",
+      "type": "audio",
+      "side": "left",
+      "positionMm": { "x": -179.9, "y": -9, "z": -7 },
+      "info": "Gaming headset, headphones or speakers.",
+      "specs": ["3.5 mm headphone/microphone combo"]
+    },
+    {
+      "id": "usb-a-right",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "right",
+      "positionMm": { "x": 179.9, "y": -10, "z": -14 },
+      "info": "Side USB-A port for drives and accessories.",
+      "specs": ["USB-A · USB 5Gbps"]
+    },
+    {
+      "id": "e-shutter",
+      "label": "Webcam E-shutter switch",
+      "type": "switch",
+      "side": "right",
+      "positionMm": { "x": 179.9, "y": -10, "z": 83 },
+      "info": "Electronic privacy switch: turns the webcam off completely.",
+      "tips": ["If the camera shows a black image, check this switch first."]
+    },
+    {
+      "id": "power",
+      "label": "Power button (LOQ logo)",
+      "type": "power",
+      "side": "top",
+      "positionMm": { "x": 0, "y": 0, "z": 11 },
+      "info": "Round LOQ-logo button, centred above the keyboard. Press to turn on or sleep. No fingerprint reader on this model.",
+      "tips": ["Hold for about 10 seconds to force a shutdown if the laptop freezes."]
+    },
+    {
+      "id": "touchpad",
+      "label": "Touchpad",
+      "type": "touchpad",
+      "side": "top",
+      "positionMm": { "x": -42, "y": 0, "z": 183 },
+      "info": "Buttonless multi-touch touchpad (75 × 120 mm), centred under the space bar rather than the laptop.",
+      "specs": ["Precision TouchPad", "75 × 120 mm"]
+    },
+    {
+      "id": "webcam",
+      "label": "Webcam (E-shutter)",
+      "type": "camera",
+      "side": "lid",
+      "positionMm": { "x": 0, "y": 228, "z": 0 },
+      "info": "FHD 1080p or HD 720p webcam in the top bezel bump, with a dual-microphone array.",
+      "specs": ["FHD 1080p or HD 720p", "E-shutter privacy switch"]
+    }
+  ]
+}

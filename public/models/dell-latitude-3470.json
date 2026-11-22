@@ -1,0 +1,138 @@
+{
+  "id": "dell-latitude-3470",
+  "displayName": "Dell Latitude 3470 (14\")",
+  "source": "Dell Latitude 3470 Owner's Manual (port list, 342 × 243.3 × 23.15 mm, display active area 309.4 × 173.95 mm, optional fingerprint reader) and Notebookcheck/Laptop Mag reviews for which side each port is on. Positions along each side are estimates in the published order. The status lights aren't included because no source states where they are; add them once checked on the laptop.",
+  "display": { "widthMm": 309.4, "heightMm": 173.95, "hingeToDisplayBottomMm": 22 },
+  "base": { "widthMm": 342, "depthMm": 243.3, "thicknessMm": 23.2, "hingeFromBackMm": 0 },
+  "defaultLidAngleDeg": 110,
+  "ports": [
+    {
+      "id": "power-in",
+      "label": "Power connector",
+      "type": "power-in",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 22 },
+      "info": "Round barrel connector for the Dell AC adapter.",
+      "specs": ["65 W or 90 W Dell adapter, 19.5 V"]
+    },
+    {
+      "id": "rj45",
+      "label": "Ethernet (RJ-45)",
+      "type": "rj45",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 46 },
+      "info": "Wired network cable.",
+      "specs": ["10/100/1000 Mbps Ethernet"]
+    },
+    {
+      "id": "hdmi",
+      "label": "HDMI",
+      "type": "hdmi",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 70 },
+      "info": "Connect an external monitor, TV or projector.",
+      "specs": ["19-pin HDMI"],
+      "tips": ["Press Win + P to choose Duplicate or Extend."]
+    },
+    {
+      "id": "usb3-1",
+      "label": "USB 3.0 (PowerShare)",
+      "type": "usb-a",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 92 },
+      "info": "Powered USB 3.0 port. It can also be used for Windows kernel debugging.",
+      "specs": ["USB 3.0", "Powered port"]
+    },
+    {
+      "id": "usb3-2",
+      "label": "USB 3.0",
+      "type": "usb-a",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 110 },
+      "info": "USB 3.0 port for drives and accessories.",
+      "specs": ["USB 3.0"]
+    },
+    {
+      "id": "audio",
+      "label": "Headset jack",
+      "type": "audio",
+      "side": "left",
+      "positionMm": { "x": -171, "y": -11, "z": 132 },
+      "info": "Headphone/microphone combo port.",
+      "specs": ["Headset combo port"]
+    },
+    {
+      "id": "lock",
+      "label": "Security lock slot",
+      "type": "lock",
+      "side": "right",
+      "positionMm": { "x": 171, "y": -11, "z": 22 },
+      "info": "Attach a cable lock to secure the laptop to a desk."
+    },
+    {
+      "id": "vga",
+      "label": "VGA",
+      "type": "vga",
+      "side": "right",
+      "positionMm": { "x": 171, "y": -11, "z": 50 },
+      "info": "15-pin VGA for older monitors and projectors.",
+      "specs": ["15-pin VGA"],
+      "tips": ["Press Win + P to choose Duplicate or Extend."]
+    },
+    {
+      "id": "usb2",
+      "label": "USB 2.0",
+      "type": "usb-a",
+      "side": "right",
+      "positionMm": { "x": 171, "y": -11, "z": 80 },
+      "info": "USB 2.0 port, fine for a mouse or keyboard.",
+      "specs": ["USB 2.0"]
+    },
+    {
+      "id": "sd",
+      "label": "SD card reader",
+      "type": "sd",
+      "side": "right",
+      "positionMm": { "x": 171, "y": -9, "z": 106 },
+      "info": "Full-size SD card reader. The card sticks out slightly when inserted.",
+      "specs": ["SD, SDHC, SDXC"]
+    },
+    {
+      "id": "power",
+      "label": "Power button",
+      "type": "power",
+      "side": "top",
+      "positionMm": { "x": 150, "y": 0, "z": 15 },
+      "info": "Press to turn on or sleep. Hold about 6 seconds to force a shutdown.",
+      "tips": ["Position is an estimate (top-right above the keyboard); check against your laptop."]
+    },
+    {
+      "id": "fingerprint",
+      "label": "Fingerprint reader",
+      "type": "fingerprint",
+      "side": "top",
+      "positionMm": { "x": 118, "y": 0, "z": 190 },
+      "info": "Optional fingerprint reader for Windows Hello sign-in. Separate from the power button.",
+      "specs": ["Optional (chosen at purchase)"],
+      "optional": true
+    },
+    {
+      "id": "touchpad",
+      "label": "Touchpad",
+      "type": "touchpad",
+      "side": "top",
+      "positionMm": { "x": 0, "y": 0, "z": 190 },
+      "info": "Touchpad with two physical buttons.",
+      "specs": ["Active area 104 × 64 mm"]
+    },
+    {
+      "id": "webcam",
+      "label": "HD webcam",
+      "type": "camera",
+      "side": "lid",
+      "positionMm": { "x": 0, "y": 206, "z": 0 },
+      "info": "720p webcam in the top bezel.",
+      "specs": ["0.92 MP, 1280 × 720 at 30 fps", "74° viewing angle"]
+    }
+  ]
+}

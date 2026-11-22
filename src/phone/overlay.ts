@@ -13,7 +13,22 @@ export const PORT_ICONS: Record<string, string> = {
   led: '💡',
   power: '⏻',
   camera: '📷',
+  rj45: 'LAN',
+  vga: 'VGA',
+  'power-in': '⚡',
+  smartcard: '💳',
+  sim: 'SIM',
+  switch: '🔘',
+  touchpad: '▭',
+  fingerprint: '👆',
 };
+
+/**
+ * A face is only labelled when it faces the camera by more than this (cosine).
+ * Thin edges seen almost edge-on (e.g. the front edge from above, next to the touchpad)
+ * are skipped, because a few mm of error there puts the label on the wrong part.
+ */
+const MIN_FACING = 0.25;
 
 /** Maps source-image pixels to CSS pixels for an element shown with object-fit: cover. */
 export interface ViewMap {
@@ -63,6 +78,17 @@ export class PortsOverlay {
     private onSelect: (port: Port) => void,
   ) {
     this.ctx = canvas.getContext('2d')!;
+  }
+
+  /** Optional parts the user confirmed their laptop has (by port id). */
+  private enabledOptional = new Set<string>();
+
+  setEnabledOptional(ids: Iterable<string>) {
+    this.enabledOptional = new Set(ids);
+  }
+
+  private isShown(port: Port) {
+    return !port.optional || this.enabledOptional.has(port.id);
   }
 
   setModel(model: LaptopModel | null) {
@@ -153,11 +179,15 @@ export class PortsOverlay {
     const boxes: LabelBox[] = [];
     for (const port of model.ports) {
       const el = this.labels.get(port.id)!;
+      if (!this.isShown(port)) {
+        el.style.visibility = 'hidden';
+        continue;
+      }
       const p = portToCamera(f, port);
       const n = sideNormal(f, port.side);
       const toCam = normalize(scale(p, -1));
       const facing = dot(n, toCam);
-      const a = facing > 0.06 ? toScreen(p, `a:${port.id}`) : null;
+      const a = facing > MIN_FACING ? toScreen(p, `a:${port.id}`) : null;
       const b = a ? toScreen(add(p, scale(n, 40)), `b:${port.id}`) : null;
       if (!a || !b || a[0] < -20 || a[0] > cw + 20 || a[1] < -20 || a[1] > ch + 20) {
         el.style.visibility = 'hidden';
@@ -229,9 +259,10 @@ export class PortsOverlay {
   private drawOutline(f: LaptopFrame, model: LaptopModel, toScreen: (p: Vec3, key?: string) => Vec2 | null) {
     const { ctx } = this;
     const { widthMm: bw, depthMm: bd, thicknessMm: bt } = model.base;
+    const back = -(model.base.hingeFromBackMm ?? 0);
     const xs = [-bw / 2, bw / 2];
     const ys = [0, -bt];
-    const zs = [0, bd];
+    const zs = [back, back + bd];
     const pts: (Vec2 | null)[] = [];
     let i = 0;
     for (const x of xs) for (const y of ys) for (const z of zs) pts.push(toScreen(baseToCamera(f, x, y, z), `o${i++}`));
@@ -285,32 +316,56 @@ export class PortsOverlay {
     }
   }
 
-  /** Push overlapping labels apart vertically, then keep them on screen. */
+  /**
+   * Stack overlapping labels without changing their order: labels are sorted by where their
+   * port appears on screen, so a row of ports (e.g. HDMI, USB-A, USB-C, USB-C, light) gets
+   * labels in the same order and the leader lines don't cross. Each stacked group is then
+   * re-centred on its ports, and everything is kept on screen.
+   */
   private resolveOverlaps(boxes: LabelBox[], cw: number, ch: number) {
     const pad = 4;
-    for (let iter = 0; iter < 12; iter++) {
-      let moved = false;
-      for (let i = 0; i < boxes.length; i++) {
-        for (let j = i + 1; j < boxes.length; j++) {
-          const a = boxes[i];
-          const b = boxes[j];
-          const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) + pad;
-          const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) + pad;
-          if (ox > 0 && oy > 0) {
-            const push = oy / 2;
-            if (a.y + a.h / 2 <= b.y + b.h / 2) {
-              a.y -= push;
-              b.y += push;
-            } else {
-              a.y += push;
-              b.y -= push;
-            }
+    boxes.sort((a, b) => a.anchor[1] - b.anchor[1] || a.anchor[0] - b.anchor[0]);
+    const startY = boxes.map((b) => b.y);
+    const hOverlap = (a: LabelBox, b: LabelBox) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) + pad > 0;
+
+    // Top-down sweep: each label goes below every earlier label it would overlap.
+    for (let i = 0; i < boxes.length; i++) {
+      const b = boxes[i];
+      for (let pass = 0; pass < 3; pass++) {
+        let moved = false;
+        for (let j = 0; j < i; j++) {
+          const a = boxes[j];
+          if (hOverlap(a, b) && b.y < a.y + a.h + pad && b.y + b.h + pad > a.y) {
+            b.y = a.y + a.h + pad;
             moved = true;
           }
         }
+        if (!moved) break;
       }
-      if (!moved) break;
     }
+
+    // Re-centre each stacked group (labels touching each other) on its original position.
+    const group = boxes.map((_, i) => i);
+    const find = (i: number): number => (group[i] === i ? i : (group[i] = find(group[i])));
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = 0; j < i; j++) {
+        const a = boxes[j];
+        const b = boxes[i];
+        if (hOverlap(a, b) && Math.abs(b.y - (a.y + a.h + pad)) < 1) group[find(i)] = find(j);
+      }
+    const shift = new Map<number, { sum: number; n: number }>();
+    boxes.forEach((b, i) => {
+      const g = find(i);
+      const s = shift.get(g) ?? { sum: 0, n: 0 };
+      s.sum += b.y - startY[i];
+      s.n++;
+      shift.set(g, s);
+    });
+    boxes.forEach((b, i) => {
+      const s = shift.get(find(i))!;
+      b.y -= s.sum / s.n;
+    });
+
     for (const b of boxes) {
       b.x = Math.min(Math.max(8, b.x), cw - b.w - 8);
       b.y = Math.min(Math.max(64, b.y), ch - b.h - 8);

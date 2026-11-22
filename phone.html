@@ -54,10 +54,15 @@
           <h2>Settings</h2>
           <button class="close" id="settingsClose" aria-label="Close">✕</button>
         </div>
+        <div id="optionalParts" class="hidden">
+          <div class="label-row" style="color: var(--muted); font-size: 14px; margin-top: 12px">Parts fitted on your laptop (only some configurations have these)</div>
+          <div id="optionalList"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="autoFov" /> Auto-calibrate camera field of view</label>
         <div class="setting">
           <div class="label-row"><span>Camera field of view</span><span id="fovValue"></span></div>
           <input type="range" id="fov" min="45" max="85" step="1" />
-          <small style="color: var(--muted)">Adjust until the dashed outline lines up with the laptop body.</small>
+          <small style="color: var(--muted)">Auto learns it as you move around the laptop. Manual: adjust until the dashed outline lines up with the laptop body.</small>
         </div>
         <label class="check"><input type="checkbox" id="useGravity" /> Use motion sensor to find the desk</label>
         <div class="setting">

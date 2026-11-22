@@ -158,6 +158,34 @@ export function poseFromHomography(H: Mat3, K: Intrinsics): Pose | null {
   return { r1, r2, r3, t };
 }
 
+/**
+ * Estimate the camera focal length (pixels) from a plane→image homography, assuming square
+ * pixels and a principal point at (cx, cy). Uses both of Zhang's constraints (orthogonal,
+ * equal-length rotation columns) in least squares. Only reliable when the plane is tilted
+ * relative to the camera, so it also returns the tilt angle for weighting.
+ */
+export function focalFromHomography(H: Mat3, cx: number, cy: number): { f: number; tiltDeg: number } | null {
+  const a1 = H[0] - cx * H[6];
+  const b1 = H[3] - cy * H[6];
+  const c1 = H[6];
+  const a2 = H[1] - cx * H[7];
+  const b2 = H[4] - cy * H[7];
+  const c2 = H[7];
+  const A1 = a1 * a2 + b1 * b2;
+  const C1 = c1 * c2;
+  const A2 = a1 * a1 + b1 * b1 - a2 * a2 - b2 * b2;
+  const C2 = c1 * c1 - c2 * c2;
+  const den = A1 * A1 + A2 * A2;
+  if (!(den > 0)) return null;
+  const u = -(A1 * C1 + A2 * C2) / den; // u = 1 / f²
+  if (!(u > 0)) return null;
+  const f = 1 / Math.sqrt(u);
+  const pose = poseFromHomography(H, { f, cx, cy });
+  if (!pose) return null;
+  const tiltDeg = (Math.acos(Math.min(1, Math.abs(pose.r3[2]))) * 180) / Math.PI;
+  return { f, tiltDeg };
+}
+
 export function planeToCamera(pose: Pose, x: number, y: number): Vec3 {
   return add(add(pose.t, scale(pose.r1, x)), scale(pose.r2, y));
 }

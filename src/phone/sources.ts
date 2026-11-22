@@ -8,8 +8,6 @@ export interface FrameSource {
   /** Source image size in pixels. */
   readonly width: number;
   readonly height: number;
-  /** Known field of view (demo only); otherwise the user setting is used. */
-  readonly fovDeg?: number;
   /** Processing image plus the factor that converts its pixels to source pixels. */
   grab(): { image: ImageData; toSource: number } | null;
   /** Exact gravity (demo only). */

@@ -45,8 +45,10 @@ QR = phone.html?d=<payload>           jsQR / BarcodeDetector reads payload (mode
 
 ```
 index.html, laptop.html, phone.html
-public/models/index.json          list of laptop models
-public/models/sample-14.json      sample layout (edit or copy for your laptop)
+public/models/index.json          list of laptop models (laptop-page dropdown)
+public/models/hp-elitebook-845-g11.json
+public/models/dell-latitude-3470.json
+public/models/lenovo-loq-15irx9.json
 src/shared/                       payload (QR data), marker drawing, model types/loading
 src/laptop/main.ts                marker page + card calibration
 src/phone/main.ts                 app controller / main loop
@@ -60,7 +62,9 @@ src/vendor/js-aruco2/             ArUco detector (vendored, patched to an ES mod
 
 ## Add your own laptop
 
-1. Copy `public/models/sample-14.json` to `public/models/<your-id>.json` (lowercase letters, numbers, dashes only).
+Each model file has a `source` field saying where its layout came from and how exact the positions are. Positions taken from manufacturer photos are about ±5 mm; anything marked as an estimate should be checked on a real unit.
+
+1. Copy an existing model file (for example `public/models/hp-elitebook-845-g11.json`) to `public/models/<your-id>.json` (lowercase letters, numbers, dashes only).
 2. Measure with a ruler or caliper:
    - `display.widthMm` / `heightMm`: the **lit** screen area.
    - `display.hingeToDisplayBottomMm`: from the hinge axis up to the bottom of the lit area.
@@ -68,11 +72,14 @@ src/vendor/js-aruco2/             ArUco detector (vendored, patched to an ES mod
 3. For each port, set `positionMm` in the base frame. The origin is the **centre of the hinge line on the top surface of the base**, with X to the right, Y up and Z towards you.
    - Left-side port: `x = -width/2`, `y = -(height above the desk measured down from the top surface)`, `z = distance from the back edge`.
    - `side: "lid"` items use `x` (right) and `y` (distance up the lid from the hinge).
+   - If the base sticks out behind the hinge (gaming laptops with a rear port block), set `base.hingeFromBackMm`. Back-edge ports then have `z = -hingeFromBackMm`.
+   - Parts only some configurations have (fingerprint reader, smart card reader, SIM slot) get `"optional": true`. They stay hidden until the user ticks them under Settings → "Parts fitted on your laptop".
+   - Only add a part when you know where it is. A guessed position is how a charging light ends up labelled on the touchpad.
 4. Add the model to `public/models/index.json`.
 
 ## Tuning on a real phone
 
-- Open ⚙️ Settings and adjust **Camera field of view** until the dashed outline matches the laptop body (typical phones are 60–70°).
+- **Camera field of view** is calibrated automatically (Settings shows `auto · NN°` once learned). Move around the laptop so the screen is seen at an angle, because head-on views carry no FOV information. The value is remembered for next time. You can switch auto off and set it by hand.
 - Turn on **Show detected markers** to check detection: green squares mark each marker, and a red dot marks its top-left corner.
 - Use screen brightness at maximum, a matte or low-glare angle, and good room light.
 
