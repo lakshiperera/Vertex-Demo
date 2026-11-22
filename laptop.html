@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laptop Marker</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="page" id="setup">
+      <h1>💻 Laptop marker</h1>
+      <p class="lead">
+        This page shows tracking markers and a QR code across your whole screen. Scan it with your phone to
+        see the ports overlay.
+      </p>
+
+      <div id="hostWarning" class="note warn hidden"></div>
+
+      <div class="field">
+        <label for="model">Laptop model</label>
+        <select id="model"></select>
+      </div>
+
+      <div class="note" id="sizeInfo">Loading…</div>
+
+      <div class="row">
+        <button class="btn" id="showBtn" disabled>Show marker (full screen)</button>
+        <button class="btn secondary" id="calibBtn" disabled>Calibrate screen size</button>
+      </div>
+
+      <div class="note">
+        Tips: turn screen brightness up, keep the laptop on a flat desk, and avoid bright reflections on the
+        screen. Press <code>Esc</code> to leave full screen.
+      </div>
+      <div id="error" class="error-box hidden"></div>
+    </main>
+
+    <canvas id="markerCanvas" class="hidden"></canvas>
+
+    <div id="calib" class="calib hidden">
+      <div class="calib-inner">
+        <h2>Calibrate screen size</h2>
+        <p>Hold a bank card (or any ID-1 card, 85.6 × 54 mm) against the screen and drag the slider until the outline matches the card.</p>
+        <div id="calibCard" class="calib-card"></div>
+        <input type="range" id="calibSlider" min="0.6" max="1.4" step="0.002" value="1" />
+        <div class="row">
+          <button class="btn" id="calibSave">Save</button>
+          <button class="btn secondary" id="calibReset">Reset to estimate</button>
+          <button class="btn secondary" id="calibCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/laptop/main.ts"></script>
+  </body>
+</html>

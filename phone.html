@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>Laptop AR Ports</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="ar-root" id="root">
+      <video id="video" class="ar-layer" playsinline muted autoplay></video>
+      <canvas id="demo" class="ar-layer hidden"></canvas>
+      <canvas id="freeze" class="ar-layer hidden"></canvas>
+      <canvas id="overlay" class="ar-layer"></canvas>
+      <div id="labels"></div>
+
+      <header class="topbar"><div class="pill" id="status"><span class="dot" id="statusDot"></span><span id="statusText">Starting…</span></div></header>
+
+      <div class="toolbar">
+        <button class="fab" id="freezeBtn" title="Freeze frame" aria-label="Freeze frame">📸</button>
+        <button class="fab" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+      </div>
+
+      <section class="start-screen" id="start">
+        <div class="start-inner">
+          <div style="font-size: 48px">💻🔍</div>
+          <h1>Laptop AR Ports</h1>
+          <p id="startLead">See every port on your laptop labelled in AR.</p>
+          <ol class="steps">
+            <li>On the laptop, open <b>laptop.html</b> and press <b>Show marker</b>.</li>
+            <li>Put the laptop on a flat desk.</li>
+            <li>Point this phone at the laptop screen, then move to the sides to see the ports.</li>
+          </ol>
+          <button class="btn" id="startBtn">Start AR</button>
+          <a href="phone.html?demo=1" id="demoLink">No laptop handy? Try demo mode</a>
+          <div class="error-box hidden" id="startError"></div>
+        </div>
+      </section>
+
+      <section class="sheet" id="infoSheet" aria-live="polite">
+        <div class="sheet-head">
+          <div class="sheet-icon" id="infoIcon"></div>
+          <h2 id="infoTitle"></h2>
+          <button class="close" id="infoClose" aria-label="Close">✕</button>
+        </div>
+        <p id="infoText"></p>
+        <div class="chips" id="infoSpecs"></div>
+        <ul class="tips" id="infoTips"></ul>
+      </section>
+
+      <section class="sheet" id="settingsSheet">
+        <div class="sheet-head">
+          <h2>Settings</h2>
+          <button class="close" id="settingsClose" aria-label="Close">✕</button>
+        </div>
+        <div class="setting">
+          <div class="label-row"><span>Camera field of view</span><span id="fovValue"></span></div>
+          <input type="range" id="fov" min="45" max="85" step="1" />
+          <small style="color: var(--muted)">Adjust until the dashed outline lines up with the laptop body.</small>
+        </div>
+        <label class="check"><input type="checkbox" id="useGravity" /> Use motion sensor to find the desk</label>
+        <div class="setting">
+          <div class="label-row"><span>Lid angle (when no motion sensor)</span><span id="lidValue"></span></div>
+          <input type="range" id="lid" min="80" max="150" step="1" />
+        </div>
+        <label class="check"><input type="checkbox" id="showOutline" /> Show laptop outline</label>
+        <label class="check"><input type="checkbox" id="debug" /> Show detected markers (debug)</label>
+        <button class="btn secondary" id="rescanBtn">Scan a different laptop</button>
+      </section>
+    </div>
+    <script type="module" src="/src/phone/main.ts"></script>
+  </body>
+</html>

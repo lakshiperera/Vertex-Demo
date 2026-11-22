@@ -1,0 +1,114 @@
+{
+  "id": "sample-14",
+  "displayName": "Sample 14-inch laptop",
+  "display": { "widthMm": 301.6, "heightMm": 188.5, "hingeToDisplayBottomMm": 14 },
+  "base": { "widthMm": 314, "depthMm": 222, "thicknessMm": 18 },
+  "defaultLidAngleDeg": 110,
+  "ports": [
+    {
+      "id": "usb-c-tb4",
+      "label": "USB-C · Thunderbolt 4",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": { "x": -157, "y": -9, "z": 38 },
+      "info": "Charging, external display and very fast data, all through one cable.",
+      "specs": ["Thunderbolt 4 / USB4 · 40 Gbps", "Power Delivery up to 100 W", "DisplayPort 1.4 video"],
+      "tips": ["Use this port for the charger or a docking station.", "Look for the lightning-bolt symbol next to the port."]
+    },
+    {
+      "id": "usb-c-32",
+      "label": "USB-C · USB 3.2",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": { "x": -157, "y": -9, "z": 55 },
+      "info": "General USB-C port for phones, drives and adapters. It can also charge the laptop.",
+      "specs": ["USB 3.2 Gen 2 · 10 Gbps", "Power Delivery up to 65 W"],
+      "tips": ["If a USB-C monitor doesn't work here, try the Thunderbolt port instead."]
+    },
+    {
+      "id": "hdmi",
+      "label": "HDMI 2.1",
+      "type": "hdmi",
+      "side": "left",
+      "positionMm": { "x": -157, "y": -9, "z": 80 },
+      "info": "Connect an external monitor, TV or meeting-room projector.",
+      "specs": ["Up to 4K at 60 Hz", "Carries audio as well as video"],
+      "tips": ["Press Win + P to choose Duplicate or Extend.", "No picture? Check the cable is pushed all the way in, then press Win + P again."]
+    },
+    {
+      "id": "usb-a-left",
+      "label": "USB-A 3.2",
+      "type": "usb-a",
+      "side": "left",
+      "positionMm": { "x": -157, "y": -9, "z": 106 },
+      "info": "For mice, keyboards, USB drives and older accessories.",
+      "specs": ["USB 3.2 Gen 1 · 5 Gbps", "Can charge a phone while the laptop sleeps"]
+    },
+    {
+      "id": "audio",
+      "label": "3.5 mm audio jack",
+      "type": "audio",
+      "side": "left",
+      "positionMm": { "x": -157, "y": -8, "z": 140 },
+      "info": "Headphones, headsets with a microphone, or external speakers.",
+      "specs": ["Combo headphone + microphone jack"],
+      "tips": ["If there's no sound, check the output device in the taskbar volume menu."]
+    },
+    {
+      "id": "lock",
+      "label": "Security lock slot",
+      "type": "lock",
+      "side": "right",
+      "positionMm": { "x": 157, "y": -9, "z": 30 },
+      "info": "Attach a cable lock to secure the laptop to a desk.",
+      "specs": ["Standard wedge-shaped lock slot"]
+    },
+    {
+      "id": "usb-a-right",
+      "label": "USB-A 3.2",
+      "type": "usb-a",
+      "side": "right",
+      "positionMm": { "x": 157, "y": -9, "z": 60 },
+      "info": "For mice, keyboards, USB drives and older accessories.",
+      "specs": ["USB 3.2 Gen 1 · 5 Gbps"]
+    },
+    {
+      "id": "microsd",
+      "label": "microSD card reader",
+      "type": "sd",
+      "side": "right",
+      "positionMm": { "x": 157, "y": -7, "z": 92 },
+      "info": "Read photos and files from microSD cards.",
+      "specs": ["UHS-I · up to 104 MB/s"],
+      "tips": ["Insert the card with the label facing up until it clicks.", "Push again to release it."]
+    },
+    {
+      "id": "status-led",
+      "label": "Battery & charging light",
+      "type": "led",
+      "side": "front",
+      "positionMm": { "x": 0, "y": -6, "z": 222 },
+      "info": "Shows the battery and charging status.",
+      "specs": ["White: charging or fully charged", "Amber: battery below 10%", "Blinking amber: battery or charger problem"]
+    },
+    {
+      "id": "power",
+      "label": "Power button + fingerprint",
+      "type": "power",
+      "side": "top",
+      "positionMm": { "x": 140, "y": 0, "z": 14 },
+      "info": "Press to turn on or sleep. Touch to sign in with your fingerprint (Windows Hello).",
+      "tips": ["Hold for 10 seconds to force a shutdown if the laptop freezes."]
+    },
+    {
+      "id": "webcam",
+      "label": "Webcam + privacy shutter",
+      "type": "camera",
+      "side": "lid",
+      "positionMm": { "x": 0, "y": 207.5, "z": 0 },
+      "info": "1080p webcam with an infrared sensor for face sign-in.",
+      "specs": ["1080p at 30 fps", "Windows Hello IR camera", "Sliding privacy shutter"],
+      "tips": ["Slide the shutter across to cover the camera when you're not using it."]
+    }
+  ]
+}
