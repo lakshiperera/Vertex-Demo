@@ -16,6 +16,9 @@ export interface TrackResult {
 export class MarkerTracker {
   private detector = new AR.Detector({ dictionaryName: DICTIONARY_NAME, maxHammingDistance: 4 });
 
+  /** Consecutive frames whose markers matched the ids but not the layout. */
+  inconsistent = 0;
+
   detect(img: ImageData): ArucoMarker[] {
     return this.detector.detectImage(img.width, img.height, img.data);
   }
@@ -30,12 +33,14 @@ export class MarkerTracker {
     toSource: number,
     getK: (H: Mat3, markerCount: number) => Intrinsics,
   ): TrackResult | null {
-    // Keep the best detection per id (0..3 only).
+    // Keep the best detection per marker of this page (ids i…i+3 → index 0…3).
+    const base = payload.i ?? 0;
     const best = new Map<number, ArucoMarker>();
     for (const m of markers) {
-      if (m.id < 0 || m.id > 3) continue;
-      const prev = best.get(m.id);
-      if (!prev || m.hammingDistance < prev.hammingDistance) best.set(m.id, m);
+      const k = m.id - base;
+      if (k < 0 || k > 3) continue;
+      const prev = best.get(k);
+      if (!prev || m.hammingDistance < prev.hammingDistance) best.set(k, m);
     }
     if (best.size === 0) return null;
 
@@ -43,8 +48,8 @@ export class MarkerTracker {
     const src: Vec2[] = [];
     const dst: Vec2[] = [];
     const corners: Vec2[][] = [];
-    for (const [id, m] of best) {
-      const [cx, cy] = payload.k[id];
+    for (const [k, m] of best) {
+      const [cx, cy] = payload.k[k];
       // Corner order from the detector: TL, TR, BR, BL of the marker as drawn (display y is up).
       const plane: Vec2[] = [
         [cx - h, cy + h],
@@ -69,7 +74,11 @@ export class MarkerTracker {
       err += Math.hypot(u - dst[i][0], v - dst[i][1]);
     }
     err /= src.length;
-    if (err > 6 * toSource) return null; // inconsistent detections (wrong marker, bad corners)
+    if (err > 6 * toSource) {
+      this.inconsistent++;
+      return null; // markers don't fit this layout (stale QR data, bad corners)
+    }
+    this.inconsistent = 0;
 
     // The caller may refine its focal-length estimate from H before choosing intrinsics.
     const pose = poseFromHomography(H, getK(H, best.size));

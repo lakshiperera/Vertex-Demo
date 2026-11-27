@@ -49,7 +49,25 @@ export interface LaptopModel {
   defaultLidAngleDeg: number;
   /** Where the layout came from and how exact the positions are. */
   source?: string;
+  /** Manufacturer, e.g. "HP", "Dell", "Lenovo". */
+  brand: string;
+  /** What the laptop looks like, for the phone's "is this really the selected laptop?" check. */
+  appearance?: LaptopAppearance;
   ports: Port[];
+}
+
+/** Rough body colour. Compared against the screen's own white/black as a lighting reference. */
+export type ChassisTone = 'silver' | 'grey' | 'black';
+
+export interface LaptopAppearance {
+  chassisTone: ChassisTone;
+  /**
+   * Points on the top surface (base frame, mm, y = 0) that show plain body colour:
+   * palm rest areas, clear of the touchpad, keyboard and stickers.
+   */
+  chassisSamplesMm: { x: number; z: number }[];
+  /** Logo on the bottom screen bezel: lid frame, x right, v = distance up from the hinge (mm). */
+  bezelLogo?: { text: string; xMm: number; vMm: number; widthMm: number };
 }
 
 export interface ModelIndexEntry {

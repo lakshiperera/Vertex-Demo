@@ -1,5 +1,5 @@
-import { fetchModel, fetchModelIndex } from '../shared/models';
-import { decodePayloadText, type MarkerPayload } from '../shared/payload';
+import { fetchAllModels, fetchModel, fetchModelIndex } from '../shared/models';
+import { decodePayloadText, markerIdsOf, samePayload, type MarkerPayload } from '../shared/payload';
 import type { LaptopModel, Port } from '../shared/types';
 import { DemoSource } from './demo';
 import { FocalEstimator, fovFromFocal } from './focal';
@@ -10,6 +10,7 @@ import { coverMap, PORT_ICONS, PortsOverlay } from './overlay';
 import { QrScanner } from './qr';
 import { CameraSource, type FrameSource } from './sources';
 import { MarkerTracker } from './tracker';
+import { HardwareVerifier } from './verify';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -43,6 +44,8 @@ const settings = loadSettings();
 const params = new URLSearchParams(location.search);
 const isDemo = params.get('demo') === '1';
 let payload: MarkerPayload | null = params.get('d') ? decodePayloadText(location.href) : null;
+/** The payload exactly as read from the QR (before any "switch model" override). */
+let rawPayload: MarkerPayload | null = payload;
 let model: LaptopModel | null = null;
 let modelLoading = false;
 let source: FrameSource | null = null;
@@ -207,14 +210,128 @@ function localStorageHasLid() {
   }
 }
 
-function setPayload(p: MarkerPayload) {
-  if (payload && payload.m === p.m && JSON.stringify(payload.k) === JSON.stringify(p.k)) return;
+// ---------- Hardware mismatch check (selected model vs the physical laptop) ----------
+const verifier = new HardwareVerifier();let allModels: LaptopModel[] = [];
+let lastVerdictAt = 0;
+/** Payload key for which the user said "it's correct". */
+let dismissedFor: string | null = null;
+/** User chose "Switch to …": show `to` whenever the QR says `from`, rescaling the page geometry. */
+let override: { from: string; to: string; scale: number } | null = null;
+
+const payloadKey = (p: MarkerPayload) => `${p.m}|${p.i ?? 0}|${p.s}`;
+
+function applyOverride(p: MarkerPayload): MarkerPayload {
+  if (!override || p.m !== override.from) return p;
+  const k = override.scale;
+  return {
+    ...p,
+    m: override.to,
+    s: p.s * k,
+    k: p.k.map(([x, y]) => [x * k, y * k] as [number, number]),
+    w: p.w && p.w * k,
+    h: p.h && p.h * k,
+  };
+}
+
+function learnedTone(id: string): number | null {
+  try {
+    const v = localStorage.getItem(`tone:${id}`);
+    return v === null ? null : Number(v);
+  } catch {
+    return null;
+  }
+}
+
+function hideMismatch() {
+  $('mismatch').classList.add('hidden');
+}
+
+/**
+ * Switch to the model that matches the physical laptop. Without a card calibration the
+ * laptop page sized everything from the selected model's screen width, so the page's
+ * mm are rescaled by (real width ÷ selected width) to get true sizes.
+ */
+function switchModel(to: LaptopModel) {
+  if (!rawPayload) return;
+  const selected = allModels.find((m) => m.id === rawPayload!.m);
+  const scale = rawPayload.c || !selected ? 1 : to.display.widthMm / selected.display.widthMm;
+  override = rawPayload.m === to.id ? null : { from: rawPayload.m, to: to.id, scale };
+  hideMismatch();
+  setPayload(rawPayload, true);
+}
+
+function updateMismatch() {
+  if (!payload || !model || !allModels.length) return;
+  const box = $('mismatch');
+  if (dismissedFor === payloadKey(payload)) return hideMismatch();
+  const v = verifier.verdict(model, payload, allModels, learnedTone);
+  if (!v.kind) return hideMismatch();
+
+  const title = document.createElement('b');
+  title.textContent = `⚠️ Model Mismatch Detected: Physical laptop does not match ${model.displayName}. Ports may be inaccurate.`;
+  const reason = document.createElement('div');
+  reason.textContent = v.reason;
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const m of v.suggestions.slice(0, 2)) {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.textContent = `Switch to ${m.displayName}`;
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      switchModel(m);
+    });
+    row.append(b);
+  }
+  const ok = document.createElement('button');
+  ok.className = 'btn secondary';
+  ok.textContent = "It's correct";
+  ok.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Remember this laptop's real body brightness on this phone, so the check learns.
+    if (v.kind === 'chassis' && v.tone !== null && model) {
+      try {
+        localStorage.setItem(`tone:${model.id}`, v.tone.toFixed(3));
+      } catch {
+        /* storage blocked */
+      }
+    }
+    if (payload) dismissedFor = payloadKey(payload);
+    hideMismatch();
+  });
+  row.append(ok);
+  box.replaceChildren(title, reason, row);
+  box.classList.remove('hidden');
+}
+
+function setPayload(raw: MarkerPayload, force = false) {
+  const p = applyOverride(raw);
+  if (!force && samePayload(payload, p)) return;
+  rawPayload = raw;
   payload = p;
+  // New screen layout: drop the old pose so nothing is drawn with stale geometry.
+  lastFrame = null;
+  foreignSince = -Infinity;
+  tracker.inconsistent = 0;
+  overlay.resetSmoothing();
+  verifier.reset();
+  hideMismatch();
   if (model && model.id !== p.m) {
     model = null;
     overlay.setModel(null);
+    renderOptionalSettings(null);
   }
   void ensureModel();
+}
+
+/** When markers from another page (other laptop / older layout) were last seen. */
+let foreignSince = -Infinity;
+
+/** Re-read the QR often while the markers on screen don't match what we know, rarely otherwise. */
+function qrInterval(now: number): number {
+  if (!payload) return 3;
+  if (now - foreignSince < 1500 || tracker.inconsistent > 5) return 3;
+  return 20;
 }
 
 async function tryQr(image: ImageData) {
@@ -233,7 +350,9 @@ function tick(now: number) {
   if (!frozen) {
     const grabbed = source.grab();
     if (!grabbed) return;
-    if (!payload && !qr.isBusy && frameNo % 3 === 0) void tryQr(grabbed.image);
+    // Keep reading the QR even while tracking, so pointing at a different laptop (or a
+    // re-rendered marker page) switches to its layout instead of getting stuck.
+    if (!qr.isBusy && frameNo % qrInterval(now) === 0) void tryQr(grabbed.image);
     // Demo fallback: if the simulated QR is too small to decode, load the payload directly.
     if (!payload && source instanceof DemoSource && now - demoStart > 4000) setPayload(source.payload);
 
@@ -242,6 +361,8 @@ function tick(now: number) {
       const h = source.height;
       let K: Intrinsics = intrinsicsFromFov(w, h, settings.fov);
       const markers = tracker.detect(grabbed.image);
+      const ids = markerIdsOf(payload);
+      if (markers.length && !markers.some((m) => ids.includes(m.id))) foreignSince = now;
       const res = tracker.estimate(markers, payload, grabbed.toSource, (H, n) => (K = intrinsicsFor(H, n, w, h)));
       debugCorners = settings.debug ? res?.corners ?? markers.map((m) => m.corners.map((c) => [c.x * grabbed.toSource, c.y * grabbed.toSource] as Vec2)) : null;
       if (res) {
@@ -250,6 +371,11 @@ function tick(now: number) {
         lastK = K;
         lastSeen = now;
         markerCount = res.markerIds.length;
+        if (frameNo % 2 === 0) verifier.sample(grabbed.image, grabbed.toSource, K, lastFrame, model, payload);
+        if (now - lastVerdictAt > 500) {
+          lastVerdictAt = now;
+          updateMismatch();
+        }
       }
     }
   }
@@ -287,8 +413,12 @@ function updateStatus(now: number) {
   if (lastFrame && now - lastSeen < 300) {
     const lid = Math.round(lastFrame.lidAngleDeg);
     const lidText = lastFrame.usedGravity ? `lid ${lid}°` : `lid ${lid}° (assumed)`;
-    return setStatus(`Tracking · ${markerCount}/4 markers · ${lidText}`, 'ok');
+    const t = verifier.medianTone;
+    const debugText = settings.debug && t !== null ? ` · body ${t.toFixed(2)}` : '';
+    return setStatus(`Tracking · ${markerCount}/4 markers · ${lidText}${debugText}`, 'ok');
   }
+  if (now - foreignSince < 1500) return setStatus('Different laptop screen · reading its QR code…', 'warn');
+  if (tracker.inconsistent > 5) return setStatus('Screen layout changed · reading its QR code…', 'warn');
   if (lastFrame) return setStatus('Holding · bring the screen back into view', 'warn');
   return setStatus(`${model.displayName} · looking for the screen markers`, 'warn');
 }
@@ -306,7 +436,10 @@ async function start() {
       const index = await fetchModelIndex();
       const id = index.find((e) => e.id === wanted)?.id ?? index[0].id;
       const m = await fetchModel(id);
-      const demo = await DemoSource.create(demoCanvas, m);
+      // ?as=<id> simulates choosing the wrong model in the laptop page's dropdown.
+      const asId = params.get('as');
+      const selectedAs = asId && asId !== id && /^[a-z0-9-]{1,64}$/.test(asId) ? await fetchModel(asId) : undefined;
+      const demo = await DemoSource.create(demoCanvas, m, selectedAs);
       video.classList.add('hidden');
       demoCanvas.classList.remove('hidden');
       source = demo;
@@ -319,6 +452,11 @@ async function start() {
     }
     $('start').classList.add('hidden');
     void ensureModel();
+    fetchAllModels()
+      .then((list) => (allModels = list))
+      .catch(() => {
+        /* mismatch suggestions just won't be offered */
+      });
     requestAnimationFrame(tick);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -410,6 +548,11 @@ function bindSettings() {
   });
   $('rescanBtn').addEventListener('click', () => {
     payload = null;
+    rawPayload = null;
+    override = null;
+    dismissedFor = null;
+    verifier.reset();
+    hideMismatch();
     model = null;
     lastFrame = null;
     overlay.setModel(null);

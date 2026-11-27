@@ -1,5 +1,14 @@
 [
-  { "id": "hp-elitebook-845-g11", "displayName": "HP EliteBook 845 G11 (14\")" },
-  { "id": "dell-latitude-3470", "displayName": "Dell Latitude 3470 (14\")" },
-  { "id": "lenovo-loq-15irx9", "displayName": "Lenovo LOQ 15 (15IRX9, 15.6\")" }
+  {
+    "id": "hp-elitebook-845-g11",
+    "displayName": "HP EliteBook 845 G11 (14\")"
+  },
+  {
+    "id": "dell-latitude-3470",
+    "displayName": "Dell Latitude 3470 (14\")"
+  },
+  {
+    "id": "lenovo-loq-15arp10e",
+    "displayName": "Lenovo LOQ 15ARP10E (15.6\")"
+  }
 ]

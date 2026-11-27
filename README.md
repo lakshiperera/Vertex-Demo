@@ -41,6 +41,20 @@ QR = phone.html?d=<payload>           jsQR / BarcodeDetector reads payload (mode
 - **True marker size:** the laptop page draws the markers at a real size in millimetres, using the model's display width (or a credit-card calibration) and puts the sizes in the QR.
 - **Hold and freeze:** labels stay for about 1 second after the screen leaves the view. The 📸 button freezes the frame so you can tap labels at leisure.
 
+## Wrong-model protection
+
+If the dropdown on the laptop page doesn't match the physical laptop, the overlay would put one laptop's ports on another's body. Two checks catch that:
+
+- **Laptop page (instant):** compares the screen's aspect ratio (and, after a card calibration, its physical width) with the selected model. On a mismatch it shows a red warning with **Use <model>** buttons for the models that fit.
+- **Phone (after the markers lock):**
+  - **Screen check (exact):** the QR carries the marker page's size, so a 16:10 screen with a 16:9 model selected (or the reverse) is flagged at once.
+  - **Body check (approximate):** the palm rest's brightness is measured relative to the screen's own white page and black marker cells. It catches clear cases like a black Dell profile on a grey Lenovo. Lighting still affects it, so the banner's **It's correct** button stores the measured value for that model on that phone, and the check learns.
+  - The red banner's **Switch to <model>** fixes the overlay on the spot. Without a card calibration it also rescales the page geometry by (real ÷ selected screen width).
+
+Each model file has `brand` and `appearance` (`chassisTone`, `chassisSamplesMm` palm-rest points, `bezelLogo`).
+
+Demo: `phone.html?demo=1&model=<physical>&as=<selected>` simulates choosing the wrong model, for example `?demo=1&model=lenovo-loq-15arp10e&as=dell-latitude-3470`.
+
 ## Project layout
 
 ```

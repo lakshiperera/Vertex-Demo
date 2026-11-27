@@ -148,6 +148,47 @@ select {
   border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
+.note.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+}
+
+.mismatch-banner {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 46px);
+  left: 12px;
+  right: 12px;
+  z-index: 12;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(185, 28, 28, 0.94);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.mismatch-banner b {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.mismatch-banner .row {
+  margin-top: 10px;
+}
+
+.mismatch-banner .btn {
+  padding: 9px 14px;
+  background: #fff;
+  color: #7f1d1d;
+}
+
+.mismatch-banner .btn.secondary {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
 .row {
   display: flex;
   gap: 10px;

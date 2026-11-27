@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { computeMarkerLayout, renderMarkerPage } from '../shared/markers';
+import { computeMarkerLayout, qrSizePx, renderMarkerPage } from '../shared/markers';
 import { encodePayloadUrl, type MarkerPayload } from '../shared/payload';
 import type { LaptopModel, Port } from '../shared/types';
 import {
@@ -60,20 +60,35 @@ export class DemoSource implements FrameSource {
   private up: Vec3 = [0, -1, 0];
   private start = performance.now();
 
+  /** Texture pixels per payload-mm (differs from PAGE_PPM when the wrong model is "selected"). */
+  private pagePpmPayload: number;
+
+  /**
+   * @param model    the physical laptop being simulated
+   * @param selected the model chosen in the laptop page's dropdown (default: the right one).
+   *                 A different one simulates a wrong selection: like the real page without a
+   *                 card calibration, the page's mm are then scaled by selected/real width.
+   */
   private constructor(
     readonly element: HTMLCanvasElement,
     private model: LaptopModel,
+    selected: LaptopModel = model,
   ) {
     element.width = this.width;
     element.height = this.height;
     this.ctx = element.getContext('2d', { willReadFrequently: true })!;
     this.K = intrinsicsFromFov(this.width, this.height, this.trueFovDeg);
-    const layout = computeMarkerLayout(model.display.widthMm, model.display.heightMm);
-    this.payload = { v: 1, m: model.id, s: layout.markerSizeMm, k: layout.centers };
+    const k = selected.display.widthMm / model.display.widthMm; // payload mm per real mm
+    const wp = model.display.widthMm * k;
+    const hp = model.display.heightMm * k;
+    const layout = computeMarkerLayout(wp, hp);
+    this.pagePpmPayload = PAGE_PPM / k;
+    // Non-zero ids, like a real laptop page (which picks random ones).
+    this.payload = { v: 1, m: selected.id, s: layout.markerSizeMm, k: layout.centers, i: 40, w: wp, h: hp, c: 0 };
   }
 
-  static async create(canvas: HTMLCanvasElement, model: LaptopModel): Promise<DemoSource> {
-    const demo = new DemoSource(canvas, model);
+  static async create(canvas: HTMLCanvasElement, model: LaptopModel, selected?: LaptopModel): Promise<DemoSource> {
+    const demo = new DemoSource(canvas, model, selected);
     await demo.buildPage();
     return demo;
   }
@@ -86,9 +101,10 @@ export class DemoSource implements FrameSource {
     c.height = h;
     const url = encodePayloadUrl(new URL('phone.html', location.href).toString(), this.payload);
     const qr = document.createElement('canvas');
-    await QRCode.toCanvas(qr, url, { width: Math.round(Math.min(h * 0.5, w * 0.32)), margin: 2, errorCorrectionLevel: 'M' });
+    const ppm = this.pagePpmPayload;
+    await QRCode.toCanvas(qr, url, { width: qrSizePx(w, h, ppm, this.payload), margin: 2, errorCorrectionLevel: 'M' });
     const ctx = c.getContext('2d')!;
-    renderMarkerPage(ctx, w, h, PAGE_PPM, this.payload, qr, 'Scan with your phone camera');
+    renderMarkerPage(ctx, w, h, ppm, this.payload, qr, 'Scan with your phone camera');
     this.page = ctx.getImageData(0, 0, w, h);
   }
 
@@ -169,12 +185,18 @@ export class DemoSource implements FrameSource {
     // Base box (convex: drawing only the faces that face the camera is enough)
     const x0 = -bw / 2;
     const x1 = bw / 2;
+    // Body colour from the model's chassis tone (top, front, sides).
+    const palette = {
+      silver: ['#b4b8bf', '#8a8f97', '#7a7f87'],
+      grey: ['#5d6168', '#4a4e54', '#43474d'],
+      black: ['#26282c', '#1d1f22', '#1a1c1f'],
+    }[model.appearance?.chassisTone ?? 'silver'];
     const faces: { n: Vec3; pts: Vec3[]; fill: string }[] = [
-      { n: [0, 0, 1], pts: [[x0, 0, zf], [x1, 0, zf], [x1, -bt, zf], [x0, -bt, zf]], fill: '#7c818a' },
-      { n: [0, 0, -1], pts: [[x1, 0, zb], [x0, 0, zb], [x0, -bt, zb], [x1, -bt, zb]], fill: '#6b7079' },
-      { n: [-1, 0, 0], pts: [[x0, 0, zb], [x0, 0, zf], [x0, -bt, zf], [x0, -bt, zb]], fill: '#6b7079' },
-      { n: [1, 0, 0], pts: [[x1, 0, zb], [x1, 0, zf], [x1, -bt, zf], [x1, -bt, zb]], fill: '#6b7079' },
-      { n: [0, 1, 0], pts: [[x0, 0, zb], [x1, 0, zb], [x1, 0, zf], [x0, 0, zf]], fill: '#a3a8b0' },
+      { n: [0, 0, 1], pts: [[x0, 0, zf], [x1, 0, zf], [x1, -bt, zf], [x0, -bt, zf]], fill: palette[1] },
+      { n: [0, 0, -1], pts: [[x1, 0, zb], [x0, 0, zb], [x0, -bt, zb], [x1, -bt, zb]], fill: palette[2] },
+      { n: [-1, 0, 0], pts: [[x0, 0, zb], [x0, 0, zf], [x0, -bt, zf], [x0, -bt, zb]], fill: palette[2] },
+      { n: [1, 0, 0], pts: [[x1, 0, zb], [x1, 0, zf], [x1, -bt, zf], [x1, -bt, zb]], fill: palette[2] },
+      { n: [0, 1, 0], pts: [[x0, 0, zb], [x1, 0, zb], [x1, 0, zf], [x0, 0, zf]], fill: palette[0] },
     ];
     for (const f of faces) {
       const center = scale(f.pts.reduce((a, b) => add(a, b)), 0.25);
@@ -186,13 +208,13 @@ export class DemoSource implements FrameSource {
     const tp = model.ports.find((p) => p.type === 'touchpad')?.positionMm ?? { x: 0, y: 0, z: zf - 50 };
     poly(
       [
-        [tp.x - 58, 0, tp.z - 36],
-        [tp.x + 58, 0, tp.z - 36],
-        [tp.x + 58, 0, tp.z + 36],
-        [tp.x - 58, 0, tp.z + 36],
+        [tp.x - 52, 0, tp.z - 35],
+        [tp.x + 52, 0, tp.z - 35],
+        [tp.x + 52, 0, tp.z + 35],
+        [tp.x - 52, 0, tp.z + 35],
       ],
-      '#959aa3',
-      'rgba(0,0,0,0.2)',
+      palette[1],
+      'rgba(0,0,0,0.25)',
     );
 
     // Port slots

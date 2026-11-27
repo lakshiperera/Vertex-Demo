@@ -1,7 +1,8 @@
 import QRCode from 'qrcode';
-import { computeMarkerLayout, renderMarkerPage } from '../shared/markers';
-import { fetchModel, fetchModelIndex } from '../shared/models';
-import { encodePayloadUrl, type MarkerPayload } from '../shared/payload';
+import { computeMarkerLayout, qrSizePx, renderMarkerPage } from '../shared/markers';
+import { matchingModels, screenMismatch, type ScreenFacts } from '../shared/hardwareMatch';
+import { fetchAllModels, fetchModel, fetchModelIndex } from '../shared/models';
+import { encodePayloadUrl, MAX_BASE_ID, type MarkerPayload } from '../shared/payload';
 import type { LaptopModel } from '../shared/types';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -22,6 +23,63 @@ const CARD_H_MM = 53.98;
 const calibKey = () => `ppm:${screen.width}x${screen.height}`;
 
 let model: LaptopModel | null = null;
+let allModels: LaptopModel[] = [];
+let baseId = -1;
+
+/** The real screen this page runs on. Physical width only counts when card-calibrated. */
+function screenFacts(): ScreenFacts {
+  const ppm = savedPpm();
+  return { aspect: screen.width / screen.height, widthMm: ppm ? screen.width / ppm : null };
+}
+
+/**
+ * Warn when the selected model can't be this laptop (screen shape, or calibrated width),
+ * and offer the models that do match.
+ */
+function checkHardware() {
+  const box = $('hwWarning');
+  if (!model) return box.classList.add('hidden');
+  const facts = screenFacts();
+  const reason = screenMismatch(model, facts);
+  if (!reason) return box.classList.add('hidden');
+
+  const title = document.createElement('b');
+  title.textContent = `⚠️ Hardware Mismatch Warning: This display does not match the selected ${model.displayName} dimensions.`;
+  const detail = document.createElement('div');
+  detail.textContent = reason;
+  const actions = document.createElement('div');
+  actions.className = 'row';
+  actions.style.marginTop = '8px';
+  const matches = matchingModels(allModels, facts);
+  if (matches.length) {
+    for (const m of matches) {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = `Use ${m.displayName}`;
+      b.addEventListener('click', () => {
+        modelSelect.value = m.id;
+        void loadModel(m.id);
+      });
+      actions.append(b);
+    }
+  } else {
+    actions.textContent = 'None of the listed models match this screen. Add a model file for this laptop (see README).';
+  }
+  box.replaceChildren(title, detail, actions);
+  box.classList.remove('hidden');
+}
+
+/**
+ * New random marker ids for every rendered page (multiple of 4, different from the last).
+ * A phone holding an older layout (other laptop, other window size) then sees ids it
+ * doesn't expect and re-reads the QR instead of mis-fitting the markers.
+ */
+function nextBaseId(): number {
+  let id: number;
+  do id = 4 * Math.floor(Math.random() * (MAX_BASE_ID / 4 + 1));
+  while (id === baseId);
+  return (baseId = id);
+}
 
 function showError(msg: string) {
   errorBox.textContent = msg;
@@ -77,6 +135,7 @@ async function loadModel(id: string) {
     showBtn.disabled = false;
     calibBtn.disabled = false;
     updateSizeInfo();
+    checkHardware();
   } catch (e) {
     showError(String(e instanceof Error ? e.message : e));
   }
@@ -94,11 +153,21 @@ async function render() {
 
   // Layout uses the real viewport size in mm; in full screen its bottom edge is the display's bottom edge.
   const layout = computeMarkerLayout(w / ppmCss, h / ppmCss);
-  const payload: MarkerPayload = { v: 1, m: model.id, s: layout.markerSizeMm, k: layout.centers };
+  const payload: MarkerPayload = {
+    v: 1,
+    m: model.id,
+    s: layout.markerSizeMm,
+    k: layout.centers,
+    i: nextBaseId(),
+    // Page size and whether the scale is measured: lets the phone check the screen against the model.
+    w: w / ppmCss,
+    h: h / ppmCss,
+    c: savedPpm() ? 1 : 0,
+  };
   const phoneUrl = new URL('phone.html', location.href).toString();
   const url = encodePayloadUrl(phoneUrl, payload);
 
-  const qrSize = Math.round(Math.min(canvas.height * 0.5, canvas.width * 0.32));
+  const qrSize = qrSizePx(canvas.width, canvas.height, ppmCanvas, payload);
   const qr = document.createElement('canvas');
   await QRCode.toCanvas(qr, url, { width: qrSize, margin: 2, errorCorrectionLevel: 'M' });
 
@@ -158,6 +227,7 @@ $('calibSave').addEventListener('click', () => {
   }
   calib.classList.add('hidden');
   updateSizeInfo();
+  checkHardware(); // a calibrated width makes the size check possible
 });
 $('calibReset').addEventListener('click', () => {
   try {
@@ -167,6 +237,8 @@ $('calibReset').addEventListener('click', () => {
   }
   calibSlider.value = '1';
   drawCalibCard();
+  updateSizeInfo();
+  checkHardware();
 });
 $('calibCancel').addEventListener('click', () => calib.classList.add('hidden'));
 
@@ -181,6 +253,7 @@ async function init() {
   checkHost();
   try {
     const index = await fetchModelIndex();
+    allModels = await fetchAllModels(); // for the mismatch check's suggestions
     let saved: string | null = null;
     try {
       saved = localStorage.getItem('laptopModel');

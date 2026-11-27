@@ -1,0 +1,235 @@
+{
+  "id": "lenovo-loq-15arp10e",
+  "displayName": "Lenovo LOQ 15ARP10E",
+  "brand": "Lenovo",
+  "source": "Lenovo PSREF LOQ 15ARP10E (June 2026): 359.2 × 236 × 19.9–22.95 mm, 15.6\" FHD 16:9, ports 1–8, 'No fingerprint reader', HD 720p camera with privacy shutter, touchpad 69 × 104 mm. Port positions measured from the PSREF left/right/top photos (about ±3 mm) and cross-checked against photos of the physical unit. Bezel height (hingeToDisplayBottomMm) is an estimate.",
+  "display": {
+    "widthMm": 344.2,
+    "heightMm": 193.6,
+    "hingeToDisplayBottomMm": 22
+  },
+  "base": {
+    "widthMm": 359.2,
+    "depthMm": 236,
+    "thicknessMm": 20,
+    "hingeFromBackMm": 3
+  },
+  "defaultLidAngleDeg": 110,
+  "appearance": {
+    "chassisTone": "grey",
+    "chassisSamplesMm": [
+      {
+        "x": -140,
+        "z": 190
+      },
+      {
+        "x": 75,
+        "z": 195
+      }
+    ],
+    "bezelLogo": {
+      "text": "Lenovo",
+      "xMm": 0,
+      "vMm": 11,
+      "widthMm": 28
+    }
+  },
+  "ports": [
+    {
+      "id": "power-in",
+      "label": "Power connector",
+      "type": "power-in",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 28
+      },
+      "info": "Lenovo slim-tip (rectangular) AC power connector. Closest port to the hinge.",
+      "specs": [
+        "Slim tip (rectangle) power connector"
+      ],
+      "tips": [
+        "Use the supplied Lenovo adapter for full performance; USB-C charging is slower."
+      ]
+    },
+    {
+      "id": "charge-led",
+      "label": "Charging light",
+      "type": "led",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 41
+      },
+      "info": "Small status light between the power connector and the Ethernet port. Shows whether the adapter is connected and the battery is charging.",
+      "tips": [
+        "Exact colours and blink patterns are listed in the Lenovo user guide."
+      ]
+    },
+    {
+      "id": "rj45",
+      "label": "Ethernet (RJ-45)",
+      "type": "rj45",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -8,
+        "z": 53
+      },
+      "info": "Wired network cable. The port has a hinged jaw: press the cable in and the jaw opens.",
+      "specs": [
+        "Gigabit Ethernet"
+      ]
+    },
+    {
+      "id": "hdmi",
+      "label": "HDMI 2.1",
+      "type": "hdmi",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 78
+      },
+      "info": "Full-size HDMI for an external monitor or TV.",
+      "specs": [
+        "HDMI 2.1, up to 8K/60Hz (per Lenovo PSREF)"
+      ],
+      "tips": [
+        "Press Win + P to choose Duplicate or Extend."
+      ]
+    },
+    {
+      "id": "usb-a-left",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 100
+      },
+      "info": "USB-A port for drives, mice and keyboards.",
+      "specs": [
+        "USB 5Gbps (USB 3.2 Gen 1)"
+      ]
+    },
+    {
+      "id": "usb-c",
+      "label": "USB-C 5Gbps",
+      "type": "usb-c",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 122
+      },
+      "info": "USB-C for data, and it can also charge the laptop.",
+      "specs": [
+        "USB 5Gbps (USB 3.2 Gen 1)",
+        "USB PD 65–100 W charging"
+      ]
+    },
+    {
+      "id": "audio",
+      "label": "Audio combo jack",
+      "type": "audio",
+      "side": "left",
+      "positionMm": {
+        "x": -179.6,
+        "y": -6,
+        "z": 140
+      },
+      "info": "3.5 mm headphone/microphone jack. Closest port to the front.",
+      "specs": [
+        "Headphone / microphone combo jack (3.5 mm)"
+      ]
+    },
+    {
+      "id": "usb-a-right",
+      "label": "USB-A 5Gbps",
+      "type": "usb-a",
+      "side": "right",
+      "positionMm": {
+        "x": 179.6,
+        "y": -6,
+        "z": 73
+      },
+      "info": "USB-A port on the right side.",
+      "specs": [
+        "USB 5Gbps (USB 3.2 Gen 1, per Lenovo PSREF)"
+      ]
+    },
+    {
+      "id": "card-reader",
+      "label": "SD card reader",
+      "type": "sd",
+      "side": "right",
+      "positionMm": {
+        "x": 179.6,
+        "y": -6,
+        "z": 95
+      },
+      "info": "Card reader slot, forward of the USB-A port.",
+      "specs": [
+        "3-in-1 card reader (SD, SDHC, SDXC)"
+      ],
+      "tips": [
+        "Insert the card label-up until it clicks."
+      ]
+    },
+    {
+      "id": "power",
+      "label": "Power button",
+      "type": "power",
+      "side": "top",
+      "positionMm": {
+        "x": 157,
+        "y": 0,
+        "z": 22
+      },
+      "info": "Round button in the top-right corner of the keyboard deck, above the numeric keypad. The white light next to it shows the laptop is on.",
+      "tips": [
+        "Hold for about 10 seconds to force a shutdown if the laptop freezes."
+      ]
+    },
+    {
+      "id": "touchpad",
+      "label": "Touchpad",
+      "type": "touchpad",
+      "side": "top",
+      "positionMm": {
+        "x": -42,
+        "y": 0,
+        "z": 184
+      },
+      "info": "Buttonless multi-touch touchpad, centred under the space bar (left of the laptop's centre because of the numeric keypad).",
+      "specs": [
+        "Precision TouchPad",
+        "69 × 104 mm"
+      ]
+    },
+    {
+      "id": "webcam",
+      "label": "HD Webcam (Privacy Shutter)",
+      "type": "camera",
+      "side": "lid",
+      "positionMm": {
+        "x": 0,
+        "y": 221,
+        "z": 0
+      },
+      "info": "HD 720p webcam centred in the top bezel, with a sliding privacy shutter and dual microphones.",
+      "specs": [
+        "HD 720p, fixed focus",
+        "Camera privacy shutter",
+        "Dual-microphone array"
+      ],
+      "tips": [
+        "Slide the shutter across to cover the camera."
+      ]
+    }
+  ]
+}
